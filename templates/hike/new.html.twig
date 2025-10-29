@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Hike{% endblock %}
+
+{% block body %}
+    <h1>Create new Hike</h1>
+
+    {{ include('hike/_form.html.twig') }}
+
+    <a href="{{ path('app_hike_index') }}">back to list</a>
+{% endblock %}

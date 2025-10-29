@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hike index{% endblock %}
+
+{% block body %}
+    <h1>Hike index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Location</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+                <th>Distance</th>
+                <th>Difficulty</th>
+                <th>IsPublic</th>
+                <th>CreatedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for hike in hikes %}
+            <tr>
+                <td>{{ hike.id }}</td>
+                <td>{{ hike.title }}</td>
+                <td>{{ hike.description }}</td>
+                <td>{{ hike.location }}</td>
+                <td>{{ hike.latitude }}</td>
+                <td>{{ hike.longitude }}</td>
+                <td>{{ hike.distance }}</td>
+                <td>{{ hike.difficulty }}</td>
+                <td>{{ hike.isPublic ? 'Yes' : 'No' }}</td>
+                <td>{{ hike.createdAt ? hike.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_hike_show', {'id': hike.id}) }}">show</a>
+                    <a href="{{ path('app_hike_edit', {'id': hike.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="11">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_hike_new') }}">Create new</a>
+{% endblock %}

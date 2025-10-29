@@ -1,0 +1,23 @@
+# Symfony / PHP
+/vendor/
+/var/
+.env
+.env.local
+.env.*.local
+/.idea/
+/node_modules/
+/public/build/
+/public/uploads/
+/config/jwt/private.pem
+/config/jwt/public.pem
+
+# Logs and Cache
+app/cache/*
+app/logs/*
+
+# IDEs
+*.iml
+*.swp
+
+# Others
+.DS_Store

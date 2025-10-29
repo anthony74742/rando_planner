@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}HikeSession index{% endblock %}
+
+{% block body %}
+    <h1>HikeSession index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Date</th>
+                <th>Notes</th>
+                <th>CreatedAt</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for hike_session in hike_sessions %}
+            <tr>
+                <td>{{ hike_session.id }}</td>
+                <td>{{ hike_session.date ? hike_session.date|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ hike_session.notes }}</td>
+                <td>{{ hike_session.createdAt ? hike_session.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_hike_session_show', {'id': hike_session.id}) }}">show</a>
+                    <a href="{{ path('app_hike_session_edit', {'id': hike_session.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_hike_session_new') }}">Create new</a>
+{% endblock %}
