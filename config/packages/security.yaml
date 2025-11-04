@@ -16,12 +16,15 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            switch_user:
+                role: ROLE_ADMIN
             form_login:
                 login_path: app_login
                 check_path: app_login
             logout:
                 path: app_logout
                 target: /
+
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }

@@ -26,9 +26,32 @@
         </tbody>
     </table>
 
-    <a href="{{ path('app_hike_session_index') }}">back to list</a>
+    <a href="{{ path('app_hike_sessions') }}">back to list</a>
 
     <a href="{{ path('app_hike_session_edit', {'id': hike_session.id}) }}">edit</a>
 
     {{ include('hike_session/_delete_form.html.twig') }}
+
+    <h3>Inviter un participant</h3>
+    <form action="{{ path('app_invitation_send', { id: hike_session.id }) }}" method="post">
+        <input type="email" name="email" placeholder="Adresse e-mail du participant" required>
+        <button type="submit" class="btn btn-primary mt-2">Envoyer l’invitation</button>
+    </form>
+
+    <h4 class="mt-4">Invitations envoyées</h4>
+    <ul>
+        {% for invitation in hike_session.invitations %}
+            <li>
+                {{ invitation.email }} —
+                <span class="badge bg-{{ invitation.status == 'accepted' ? 'success' : (invitation.status == 'declined' ? 'danger' : 'secondary') }}">
+        {{ invitation.status }}
+      </span>
+                {% if invitation.isExpired %}
+                    <span class="text-muted">(expirée)</span>
+                {% endif %}
+            </li>
+        {% else %}
+            <p>Aucune invitation envoyée pour cette session.</p>
+        {% endfor %}
+    </ul>
 {% endblock %}

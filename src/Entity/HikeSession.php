@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\HikeSessionRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -28,6 +30,25 @@ class HikeSession
 
     #[ORM\ManyToOne(inversedBy: 'hikeSessions')]
     private ?User $creator = null;
+
+    /**
+     * @var Collection<int, Invitation>
+     */
+    #[ORM\OneToMany(targetEntity: Invitation::class, mappedBy: 'session')]
+    private Collection $invitations;
+
+    public function __construct()
+    {
+        $this->invitations = new ArrayCollection();
+    }
+
+    public function create(User $creator, Hike $hike): self
+    {
+        $this->creator = $creator;
+        $this->hike = $hike;
+        $this->createdAt = new \DateTimeImmutable();
+        return $this;
+    }
 
     public function getId(): ?int
     {
@@ -90,6 +111,36 @@ class HikeSession
     public function setCreator(?User $creator): static
     {
         $this->creator = $creator;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Invitation>
+     */
+    public function getInvitations(): Collection
+    {
+        return $this->invitations;
+    }
+
+    public function addInvitation(Invitation $invitation): static
+    {
+        if (!$this->invitations->contains($invitation)) {
+            $this->invitations->add($invitation);
+            $invitation->setSession($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvitation(Invitation $invitation): static
+    {
+        if ($this->invitations->removeElement($invitation)) {
+            // set the owning side to null (unless already changed)
+            if ($invitation->getSession() === $this) {
+                $invitation->setSession(null);
+            }
+        }
 
         return $this;
     }

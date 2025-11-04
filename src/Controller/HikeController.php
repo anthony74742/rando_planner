@@ -5,23 +5,40 @@ namespace App\Controller;
 use App\Entity\Hike;
 use App\Form\HikeType;
 use App\Repository\HikeRepository;
+use App\Repository\HikeSessionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 #[IsGranted('ROLE_USER')]
 #[Route('/hike')]
 final class HikeController extends AbstractController
 {
 
+    #[Route('/test-mail', name: 'app_test_mail')]
+    public function testMail(MailerInterface $mailer): Response
+    {
+        $email = (new Email())
+            ->from('test@rando-planner.local')
+            ->to('demo@example.com')
+            ->subject('Test Mailpit 🏔️')
+            ->text('Ceci est un test de Mailpit via Symfony.');
+
+        $mailer->send($email);
+
+        return new Response('Mail envoyé (vérifie Mailpit sur http://localhost:8025)');
+    }
+
     #[Route(name: 'app_hike_index', methods: ['GET'])]
     public function index(HikeRepository $hikeRepository): Response
     {
         $user = $this->getUser();
-        $hikes = $hikeRepository->findBy(['creator' => $user]);
+        $hikes = $hikeRepository->findByUserOrPublic($user);
 
         return $this->render('hike/index.html.twig', [
             'hikes' => $hikes,
@@ -47,10 +64,13 @@ final class HikeController extends AbstractController
         ]);
     }
     #[Route('/{id}', name: 'app_hike_show', methods: ['GET'])]
-    public function show(Hike $hike): Response
+    public function show(Hike $hike, HikeSessionRepository $hikeSessionRepository): Response
     {
+        $hikeSession = $hikeSessionRepository->findBy(['hike' => $hike]);
+
         return $this->render('hike/show.html.twig', [
             'hike' => $hike,
+            'hikeSession' => $hikeSession
         ]);
     }
 

@@ -13,7 +13,6 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class HikeRepository extends ServiceEntityRepository
 {
-    private EntityManagerInterface $_em;
 
     public function __construct(ManagerRegistry $registry)
     {
@@ -38,29 +37,26 @@ class HikeRepository extends ServiceEntityRepository
         }
     }
 
-    //    /**
-    //     * @return Hike[] Returns an array of Hike objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('h')
-    //            ->andWhere('h.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('h.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Hike
-    //    {
-    //        return $this->createQueryBuilder('h')
-    //            ->andWhere('h.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function findByUserOrPublic($user): array
+    {
+        return $this->createQueryBuilder('h')
+            ->where('h.creator = :user')
+            ->orWhere('h.isPublic = true')
+            ->setParameter('user', $user)
+            ->orderBy('h.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+    public function findUpcomingByHike(Hike $hike): array
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.hike = :hike')
+            ->andWhere('s.date > :now')
+            ->setParameter('hike', $hike)
+            ->setParameter('now', new \DateTimeImmutable())
+            ->orderBy('s.date', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
 

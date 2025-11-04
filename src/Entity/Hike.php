@@ -47,7 +47,8 @@ class Hike
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'creator')]
+    #[ORM\ManyToOne(inversedBy: 'hikesCreated')]
+    #[ORM\JoinColumn(nullable: false)]
     private ?User $creator = null;
 
     /**

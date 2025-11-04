@@ -2,57 +2,55 @@
 
 namespace App\Repository;
 
-use App\Entity\HikeSession;
+use App\Entity\Invitation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<HikeSession>
+ * @extends ServiceEntityRepository<Invitation>
  */
-class HikeSessionRepository extends ServiceEntityRepository
+class InvitationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, HikeSession::class);
+        parent::__construct($registry, Invitation::class);
     }
 
-    public function save(HikeSession $session, bool $flush = false): void
+    public function save(Invitation $invitation, bool $flush = false): void
     {
-        $this->getEntityManager()->persist($session);
-
+        $this->getEntityManager()->persist($invitation);
         if ($flush) {
             $this->getEntityManager()->flush();
         }
     }
 
-    public function remove(HikeSession $session, bool $flush = false): void
+    public function remove(Invitation $invitation, bool $flush = false): void
     {
-        $this->getEntityManager()->remove($session);
-
+        $this->getEntityManager()->remove($invitation);
         if ($flush) {
             $this->getEntityManager()->flush();
         }
     }
 
     //    /**
-    //     * @return HikeSession[] Returns an array of HikeSession objects
+    //     * @return Invitation[] Returns an array of Invitation objects
     //     */
     //    public function findByExampleField($value): array
     //    {
-    //        return $this->createQueryBuilder('h')
-    //            ->andWhere('h.exampleField = :val')
+    //        return $this->createQueryBuilder('i')
+    //            ->andWhere('i.exampleField = :val')
     //            ->setParameter('val', $value)
-    //            ->orderBy('h.id', 'ASC')
+    //            ->orderBy('i.id', 'ASC')
     //            ->setMaxResults(10)
     //            ->getQuery()
     //            ->getResult()
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?HikeSession
+    //    public function findOneBySomeField($value): ?Invitation
     //    {
-    //        return $this->createQueryBuilder('h')
-    //            ->andWhere('h.exampleField = :val')
+    //        return $this->createQueryBuilder('i')
+    //            ->andWhere('i.exampleField = :val')
     //            ->setParameter('val', $value)
     //            ->getQuery()
     //            ->getOneOrNullResult()

@@ -40,7 +40,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Hike>
      */
     #[ORM\OneToMany(targetEntity: Hike::class, mappedBy: 'creator')]
-    private Collection $creator;
+    private Collection $hikesCreated;
 
     /**
      * @var Collection<int, HikeSession>
@@ -50,7 +50,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->creator = new ArrayCollection();
+        $this->hikesCreated = new ArrayCollection();
         $this->hikeSessions = new ArrayCollection();
     }
 
@@ -140,25 +140,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getCreator(): Collection
     {
-        return $this->creator;
+        return $this->hikesCreated;
     }
 
-    public function addCreator(Hike $creator): static
+    public function addCreator(Hike $hikesCreated): static
     {
-        if (!$this->creator->contains($creator)) {
-            $this->creator->add($creator);
-            $creator->setCreator($this);
+        if (!$this->hikesCreated->contains($hikesCreated)) {
+            $this->hikesCreated->add($hikesCreated);
+            $hikesCreated->setCreator($this);
         }
 
         return $this;
     }
 
-    public function removeCreator(Hike $creator): static
+    public function removeCreator(Hike $hikesCreated): static
     {
-        if ($this->creator->removeElement($creator)) {
+        if ($this->hikesCreated->removeElement($hikesCreated)) {
             // set the owning side to null (unless already changed)
-            if ($creator->getCreator() === $this) {
-                $creator->setCreator(null);
+            if ($hikesCreated->getCreator() === $this) {
+                $hikesCreated->setCreator(null);
             }
         }
 
