@@ -40,6 +40,44 @@ class ProfileController extends AbstractController
         return $this->redirectToRoute('app_profile');
     }
 
+    #[Route('/profile/update-avatar', name: 'app_profile_update_avatar', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function updateAvatar(Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isCsrfTokenValid('update_avatar', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        $file = $request->files->get('avatar');
+
+        if (!$file) {
+            $this->addFlash('error', 'Veuillez sélectionner une image.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        // Vérifier que c'est une image
+        $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($file->getMimeType(), $validMimes)) {
+            $this->addFlash('error', 'Seules les images (JPG, PNG, GIF, WebP) sont acceptées.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        // Vérifier la taille (max 5MB)
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            $this->addFlash('error', 'L\'image ne doit pas dépasser 5MB.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        $user = $this->getUser();
+        $user->setAvatarFile($file);
+        $em->flush();
+
+        $this->addFlash('success', 'Votre photo de profil a été mise à jour avec succès.');
+        return $this->redirectToRoute('app_profile');
+    }
+
+
     #[Route('/profile/update-password', name: 'app_profile_update_password', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function updatePassword(

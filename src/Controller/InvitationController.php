@@ -81,4 +81,35 @@ class InvitationController extends AbstractController
             'invitation' => $invitation,
         ]);
     }
+
+    #[Route('/{token}/decline', name: 'app_invitation_decline')]
+    public function decline(
+        string $token,
+        InvitationRepository $repo,
+        EntityManagerInterface $em
+    ): Response {
+        $invitation = $repo->findOneBy(['token' => $token]);
+
+        if (!$invitation) {
+            throw $this->createNotFoundException('Lien d’invitation invalide.');
+        }
+
+        if ($invitation->isExpired()) {
+            $this->addFlash('danger', 'Ce lien d’invitation a expiré.');
+            return $this->redirectToRoute('app_home');
+        }
+
+        if ($invitation->getStatus() !== 'pending') {
+            $this->addFlash('info', 'Cette invitation a déjà été utilisée.');
+            return $this->redirectToRoute('app_home');
+        }
+
+        $invitation->setStatus('declined');
+        $em->flush();
+
+        $this->addFlash('warning', 'Tu as refusé cette invitation.');
+        return $this->redirectToRoute('app_hike_session_show', [
+            'id' => $invitation->getSession()->getId(),
+        ]);
+    }
 }

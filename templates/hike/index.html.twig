@@ -1,51 +1,119 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hike index{% endblock %}
+{% block title %}Mes randonnées{% endblock %}
 
 {% block body %}
-    <h1>Hike index</h1>
+    <div class="min-h-screen bg-gray-50">
+        {{ include('_nav.html.twig') }}
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Location</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>Distance</th>
-                <th>Difficulty</th>
-                <th>IsPublic</th>
-                <th>CreatedAt</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for hike in hikes %}
-            <tr>
-                <td>{{ hike.id }}</td>
-                <td>{{ hike.title }}</td>
-                <td>{{ hike.description }}</td>
-                <td>{{ hike.location }}</td>
-                <td>{{ hike.latitude }}</td>
-                <td>{{ hike.longitude }}</td>
-                <td>{{ hike.distance }}</td>
-                <td>{{ hike.difficulty }}</td>
-                <td>{{ hike.isPublic ? 'Yes' : 'No' }}</td>
-                <td>{{ hike.createdAt ? hike.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_hike_show', {'id': hike.id}) }}">show</a>
-                    <a href="{{ path('app_hike_edit', {'id': hike.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="11">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            {# Bouton retour #}
+            <div class="mb-6">
+                <a href="{{ path('app_home') }}" class="inline-flex items-center text-gray-600 hover:text-green-600 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour
+                </a>
+            </div>
 
-    <a href="{{ path('app_hike_new') }}">Create new</a>
+            {# En-tête #}
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Mes randonnées</h1>
+                    <p class="text-gray-600 mt-2">Gérez vos randonnées créées</p>
+                </div>
+                <a href="{{ path('app_hike_new') }}" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
+                    Créer une randonnée
+                </a>
+            </div>
+
+            {# Messages flash #}
+            {% for message in app.flashes('success') %}
+                <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {# Grille de randonnées #}
+            {% if hikes|length > 0 %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for hike in hikes %}
+                        <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+                            {# Image #}
+                            <div class="w-full h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                <span class="text-white text-5xl">🥾</span>
+                            </div>
+
+                            {# Contenu #}
+                            <div class="p-6">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ hike.title }}</h3>
+
+                                {% if hike.description %}
+                                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                        {{ hike.description }}
+                                    </p>
+                                {% endif %}
+
+                                {# Détails #}
+                                <div class="space-y-2 mb-4 text-sm text-gray-500">
+                                    <div class="flex items-center gap-2">
+                                        <span>📍</span>
+                                        <span>{{ hike.location }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span>📏</span>
+                                        <span>{{ hike.distance }} km</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span>⏱️</span>
+                                        <span>{{ hike.duration }}</span>
+                                    </div>
+                                    {% if hike.difficulty %}
+                                        <div class="flex items-center gap-2">
+                                            <span>⛰️</span>
+                                            <span class="capitalize">{{ hike.difficulty }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {# Statut visibilité #}
+                                <div class="mb-4">
+                                    {% if hike.isPublic %}
+                                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Public</span>
+                                    {% else %}
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Privé</span>
+                                    {% endif %}
+                                </div>
+
+                                {# Sessions count #}
+                                <div class="text-xs text-gray-500 mb-4 pb-4 border-b border-gray-200">
+                                    📅 {{ hike.hikeSessions|length }} session(s)
+                                </div>
+
+                                {# Actions #}
+                                <div class="flex gap-2">
+                                    <a href="{{ path('app_hike_show', {'id': hike.id}) }}" class="flex-1 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition text-center">
+                                        Voir
+                                    </a>
+                                    <a href="{{ path('app_hike_edit', {'id': hike.id}) }}" class="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition text-center">
+                                        Modifier
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+                    <div class="text-6xl mb-4">🥾</div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune randonnée créée</h3>
+                    <p class="text-gray-600 mb-6">Vous n'avez pas encore créé de randonnée. Commencez maintenant !</p>
+                    <a href="{{ path('app_hike_new') }}" class="inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
+                        Créer votre première randonnée
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}

@@ -1,27 +1,40 @@
 <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
+            <!-- Logo / Accueil -->
             <div class="flex items-center">
                 <a href="{{ path('app_home') }}" class="text-2xl font-bold text-green-600">
                     Randonnées
                 </a>
             </div>
 
+            <!-- Menu principal -->
             <div class="flex items-center gap-4">
                 {% if app.user %}
-                    <a href="{{ path('app_hike_new') }}" class="px-4 py-2 text-green-600 hover:text-green-700 font-medium">
-                        Créer
-                    </a>
+                    <!-- Gestion des randonnées -->
                     <a href="{{ path('app_hike_index') }}" class="px-4 py-2 text-gray-700 hover:text-gray-900">
                         Mes randonnées
                     </a>
+                    <a href="{{ path('app_hike_new') }}" class="px-4 py-2 text-green-600 hover:text-green-700 font-medium">
+                        Créer une randonnée
+                    </a>
+
+                    <!-- Sessions -->
+                    <a href="{{ path('app_hike_sessions') }}" class="px-4 py-2 text-gray-700 hover:text-gray-900">
+                        Mes sessions
+                    </a>
+
+                    <!-- Profil utilisateur -->
                     <a href="{{ path('app_profile') }}" class="px-4 py-2 text-gray-700 hover:text-gray-900">
                         Profil
                     </a>
+
+                    <!-- Déconnexion -->
                     <a href="{{ path('app_logout') }}" class="px-4 py-2 text-gray-700 hover:text-gray-900">
                         Déconnexion
                     </a>
                 {% else %}
+                    <!-- Non connecté -->
                     <a href="{{ path('app_login') }}" class="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">
                         Connexion
                     </a>

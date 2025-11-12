@@ -1,57 +1,244 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}HikeSession{% endblock %}
+{% block title %}Session - {{ hike_session.hike.title }}{% endblock %}
 
 {% block body %}
-    <h1>HikeSession</h1>
+    <div class="min-h-screen bg-gray-50">
+        {{ include('_nav.html.twig') }}
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ hike_session.id }}</td>
-            </tr>
-            <tr>
-                <th>Date</th>
-                <td>{{ hike_session.date ? hike_session.date|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Notes</th>
-                <td>{{ hike_session.notes }}</td>
-            </tr>
-            <tr>
-                <th>CreatedAt</th>
-                <td>{{ hike_session.createdAt ? hike_session.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+        <div class="max-w-5xl mx-auto px-4 py-8">
+            {# Bouton retour #}
+            <div class="mb-6">
+                <a href="{{ path('app_hike_show', {'id': hike_session.hike.id}) }}" class="inline-flex items-center text-gray-600 hover:text-green-600 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Retour à la randonnée
+                </a>
+            </div>
 
-    <a href="{{ path('app_hike_sessions') }}">back to list</a>
+            {# Messages flash #}
+            {% for message in app.flashes('success') %}
+                <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6">
+                    {{ message }}
+                </div>
+            {% endfor %}
 
-    <a href="{{ path('app_hike_session_edit', {'id': hike_session.id}) }}">edit</a>
+            {% for message in app.flashes('error') %}
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6">
+                    {{ message }}
+                </div>
+            {% endfor %}
 
-    {{ include('hike_session/_delete_form.html.twig') }}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {# Colonne principale #}
+                <div class="lg:col-span-2 space-y-6">
+                    {# Informations de la session #}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900 mb-2">Session - {{ hike_session.hike.title }}</h1>
+                                <a href="{{ path('app_hike_show', {'id': hike_session.hike.id}) }}" class="text-green-600 hover:text-green-700 font-medium">
+                                    Voir la randonnée complète
+                                </a>
+                            </div>
 
-    <h3>Inviter un participant</h3>
-    <form action="{{ path('app_invitation_send', { id: hike_session.id }) }}" method="post">
-        <input type="email" name="email" placeholder="Adresse e-mail du participant" required>
-        <button type="submit" class="btn btn-primary mt-2">Envoyer l’invitation</button>
-    </form>
+                            {% if app.user and app.user == hike_session.creator %}
+                                <div class="flex gap-2">
+                                    <a href="{{ path('app_hike_session_edit', {'id': hike_session.id}) }}" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">
+                                        Modifier
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
 
-    <h4 class="mt-4">Invitations envoyées</h4>
-    <ul>
-        {% for invitation in hike_session.invitations %}
-            <li>
-                {{ invitation.email }} —
-                <span class="badge bg-{{ invitation.status == 'accepted' ? 'success' : (invitation.status == 'declined' ? 'danger' : 'secondary') }}">
-        {{ invitation.status }}
-      </span>
-                {% if invitation.isExpired %}
-                    <span class="text-muted">(expirée)</span>
-                {% endif %}
-            </li>
-        {% else %}
-            <p>Aucune invitation envoyée pour cette session.</p>
-        {% endfor %}
-    </ul>
+                        {# Détails de la session #}
+                        <div class="grid grid-cols-2 gap-6 py-6 border-t border-b border-gray-200">
+                            <div class="flex items-start gap-3">
+                                <span class="text-3xl">📅</span>
+                                <div>
+                                    <div class="text-sm text-gray-500">Date et heure</div>
+                                    <div class="font-medium text-gray-900">{{ hike_session.date|date('d/m/Y à H:i') }}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3">
+                                <span class="text-3xl">📧</span>
+                                <div>
+                                    <div class="text-sm text-gray-500">Invitations</div>
+                                    <div class="font-medium text-gray-900">{{ hike_session.invitations|length }}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3 col-span-2">
+                                <span class="text-3xl">📍</span>
+                                <div>
+                                    <div class="text-sm text-gray-500">Lieu</div>
+                                    <div class="font-medium text-gray-900">{{ hike_session.hike.location }}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3 col-span-2">
+                                <span class="text-3xl">⏱️</span>
+                                <div>
+                                    <div class="text-sm text-gray-500">Durée estimée</div>
+                                    <div class="font-medium text-gray-900">{{ hike_session.hike.duration }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# Notes #}
+                        {% if hike_session.notes %}
+                            <div class="mt-6">
+                                <h3 class="font-semibold text-gray-900 mb-2">Notes</h3>
+                                <p class="text-gray-700 leading-relaxed">{{ hike_session.notes }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# Inviter des participants #}
+                    {% if app.user and app.user == hike_session.creator %}
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Inviter des participants</h2>
+
+                            <form action="{{ path('app_invitation_send', {'id': hike_session.id}) }}" method="post" class="space-y-4">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Adresse email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        id="email"
+                                        placeholder="participant@example.com"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        required
+                                    >
+                                </div>
+
+                                <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition">
+                                    Envoyer l'invitation
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                    {# Invitations envoyées #}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Invitations</h2>
+
+                        {% if hike_session.invitations|length > 0 %}
+                            <div class="space-y-3">
+                                {% for invitation in hike_session.invitations %}
+                                    <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900">{{ invitation.email }}</div>
+                                            <div class="text-sm text-gray-500">Invité le {{ invitation.sentAt|date('d/m/Y à H:i') }}</div>
+                                        </div>
+
+                                        <div class="flex items-center gap-3">
+                                            {% if invitation.status == 'accepted' %}
+                                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
+                                    <span>✓</span>
+                                    Acceptée
+                                </span>
+                                            {% elseif invitation.status == 'declined' %}
+                                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-sm font-medium rounded-full">
+                                    <span>✕</span>
+                                    Déclinée
+                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm font-medium rounded-full">
+                                    <span>⏳</span>
+                                    En attente
+                                </span>
+                                            {% endif %}
+
+                                            {% if invitation.isExpired %}
+                                                <span class="text-xs text-gray-500">(expirée)</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <div class="text-4xl mb-3">📧</div>
+                                <p class="text-gray-500">Aucune invitation envoyée pour cette session</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Sidebar #}
+                <div class="space-y-6">
+                    {# Informations de la randonnée #}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Randonnée</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-sm text-gray-500">Nom</div>
+                                <div class="font-medium text-gray-900">{{ hike_session.hike.title }}</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Distance</div>
+                                <div class="font-medium text-gray-900">{{ hike_session.hike.distance }} km</div>
+                            </div>
+                            {% if hike_session.hike.difficulty %}
+                                <div>
+                                    <div class="text-sm text-gray-500">Difficulté</div>
+                                    <div class="font-medium text-gray-900 capitalize">{{ hike_session.hike.difficulty }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {# Organisateur #}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Organisateur</h3>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="text-green-600 font-bold text-xl">{{ hike_session.creator.email|first|upper }}</span>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">{{ hike_session.creator.email }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Statistiques #}
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Statistiques</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Créée le</span>
+                                <span class="font-medium text-gray-900">{{ hike_session.createdAt|date('d/m/Y') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Invitations</span>
+                                <span class="font-medium text-gray-900">{{ hike_session.invitations|length }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Acceptées</span>
+                                <span class="font-medium text-green-600">{{ hike_session.invitations|filter(i => i.status == 'accepted')|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Actions #}
+                    {% if app.user and app.user == hike_session.creator %}
+                        <div class="bg-white rounded-lg shadow-sm p-6 border-t-2 border-red-200">
+                            <h3 class="text-lg font-semibold text-red-600 mb-4">Actions</h3>
+                            <form method="post" action="{{ path('app_hike_session_delete', {'id': hike_session.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette session ?');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ hike_session.id) }}">
+                                <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition">
+                                    Supprimer la session
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
