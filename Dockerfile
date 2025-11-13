@@ -87,8 +87,15 @@ RUN set -eux; \
 COPY --link --exclude=frankenphp/ . ./
 
 RUN set -eux; \
-	mkdir -p var/cache var/log; \
-	composer dump-autoload --classmap-authoritative --no-dev; \
-	composer dump-env prod; \
-	composer run-script --no-dev post-install-cmd; \
-	chmod +x bin/console; sync;
+    mkdir -p var/cache var/log; \
+    composer dump-autoload --classmap-authoritative --no-dev; \
+    \
+    # Generate a temporary .env file so dump-env can run
+    echo "APP_ENV=prod" > .env && \
+    echo "APP_SECRET=${APP_SECRET}" >> .env && \
+    echo "DATABASE_URL=${DATABASE_URL}" >> .env && \
+    echo "DEFAULT_URI=${DEFAULT_URI}" >> .env; \
+    \
+    composer dump-env prod; \
+    composer run-script --no-dev post-install-cmd; \
+    chmod +x bin/console; sync;
