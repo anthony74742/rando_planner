@@ -1,30 +1,13 @@
-# Utiliser PHP avec Apache
-FROM php:8.2-apache
+FROM dunglas/frankenphp
 
-# Installer les dépendances système et extensions PHP nécessaires à Symfony
-RUN apt-get update && apt-get install -y \
-    git unzip libicu-dev libzip-dev zip libpq-dev \
-    && docker-php-ext-install intl pdo pdo_pgsql opcache zip
+# Copier le code source de l'application dans le dossier public
+COPY . /app/public
 
-# Activer le module rewrite d'Apache
-RUN a2enmod rewrite
+# (Optionnel) Installer des extensions PHP nécessaires
+RUN install-php-extensions pdo_mysql gd intl zip opcache
 
-# Copier le projet dans le conteneur
-WORKDIR /var/www/html
-COPY . .
+# Définir la configuration du serveur FrankenPHP : point d'entrée PHP
+ENV FRANKENPHP_CONFIG="worker ./public/index.php"
 
-# Installer les dépendances PHP (sans les dev, optimisé pour la prod)
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-
-# Nettoyer le cache et le préparer pour la prod
-RUN php bin/console cache:clear --env=prod && php bin/console cache:warmup --env=prod
-
-# Donner les droits à Apache
-RUN chown -R www-data:www-data /var/www/html
-
-# Exposer le port HTTP
+# Exposer le port 80 (HTTP)
 EXPOSE 80
-
-# Lancer Apache
-CMD ["apache2-foreground"]
