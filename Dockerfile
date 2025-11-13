@@ -1,89 +1,94 @@
 #syntax=docker/dockerfile:1
 
-# Version spécifique de FrankenPHP avec PHP 8.4
+# Versions
 FROM dunglas/frankenphp:1-php8.4 AS frankenphp_upstream
+
+# The different stages of this Dockerfile are meant to be built into separate images
+# https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage
+# https://docs.docker.com/compose/compose-file/#target
+
 
 # Base FrankenPHP image
 FROM frankenphp_upstream AS frankenphp_base
 
 WORKDIR /app
 
-# Volume pour les données persistantes
 VOLUME /app/var/
 
-# Dépendances système nécessaires
+# persistent / runtime deps
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	file \
 	git \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Installer les extensions PHP nécessaires
 RUN set -eux; \
 	install-php-extensions \
 		@composer \
-		pdo_pgsql \
-		gd \
 		apcu \
 		intl \
 		opcache \
 		zip \
-		iconv \
 	;
 
 # https://getcomposer.org/doc/03-cli.md#composer-allow-superuser
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+# Transport to use by Mercure (default to Bolt)
+# ENV MERCURE_TRANSPORT_URL=bolt:///data/mercure.db
+
 ENV PHP_INI_SCAN_DIR=":$PHP_INI_DIR/app.conf.d"
 
-# Créer le répertoire pour les configurations PHP personnalisées
-RUN mkdir -p $PHP_INI_DIR/app.conf.d
+###> recipes ###
+###< recipes ###
 
-# Configuration PHP de base
-RUN echo "opcache.enable=1" > $PHP_INI_DIR/app.conf.d/10-opcache.ini && \
-	echo "opcache.memory_consumption=256" >> $PHP_INI_DIR/app.conf.d/10-opcache.ini && \
-	echo "opcache.max_accelerated_files=20000" >> $PHP_INI_DIR/app.conf.d/10-opcache.ini && \
-	echo "opcache.validate_timestamps=0" >> $PHP_INI_DIR/app.conf.d/10-opcache.ini && \
-	echo "opcache.revalidate_freq=0" >> $PHP_INI_DIR/app.conf.d/10-opcache.ini
+COPY --link frankenphp/conf.d/10-app.ini $PHP_INI_DIR/app.conf.d/
+COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+
+ENTRYPOINT ["docker-entrypoint"]
+
+HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit 1
+CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile" ]
+
+# Dev FrankenPHP image
+FROM frankenphp_base AS frankenphp_dev
+
+ENV APP_ENV=dev
+ENV XDEBUG_MODE=off
+ENV FRANKENPHP_WORKER_CONFIG=watch
+
+RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+
+RUN set -eux; \
+	install-php-extensions \
+		xdebug \
+	;
+
+COPY --link frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
+
+CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
 
 # Prod FrankenPHP image
 FROM frankenphp_base AS frankenphp_prod
 
 ENV APP_ENV=prod
 
-# Utiliser la configuration PHP de production
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-# Copier les fichiers de dépendances d'abord (pour le cache Docker)
-COPY --link composer.* symfony.* ./
+COPY --link frankenphp/conf.d/20-app.prod.ini $PHP_INI_DIR/app.conf.d/
 
-# Installer les dépendances (sans autoloader ni scripts pour l'instant)
+# prevent the reinstallation of vendors at every changes in the source code
+COPY --link composer.* symfony.* ./
 RUN set -eux; \
 	composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
-# Copier le reste du code source
+# copy sources
 COPY --link --exclude=frankenphp/ . ./
 
-# Créer les répertoires nécessaires et exécuter les scripts post-installation
 RUN set -eux; \
-	mkdir -p var/cache var/log public/uploads/avatars; \
+	mkdir -p var/cache var/log; \
 	composer dump-autoload --classmap-authoritative --no-dev; \
 	composer dump-env prod; \
 	composer run-script --no-dev post-install-cmd; \
-	chmod +x bin/console; \
-	chown -R www-data:www-data /app; \
-	chmod -R 755 /app; \
-	chmod -R 775 public/uploads var; \
-	sync
-
-# Configurer FrankenPHP
-ENV FRANKENPHP_CONFIG="worker ./public/index.php"
-ENV SERVER_NAME=":${PORT:-80}"
-
-# Exposer le port 80
-EXPOSE 80
-
-# Utiliser www-data comme utilisateur
-USER www-data
-
-# Point d'entrée par défaut de FrankenPHP
-CMD ["frankenphp", "run"]
+	chmod +x bin/console; sync;
