@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -49,15 +50,12 @@ class ProfileController extends AbstractController
             return $this->redirectToRoute('app_profile');
         }
 
-        $file = $request->files->get('avatar');
-
-        if (!$file) {
-            $this->addFlash('error', 'Veuillez sélectionner une image.');
-            return $this->redirectToRoute('app_profile');
-        }
+        /** @var UploadedFile|null $file */
+        $file = $request->files->get('avatarFile');
 
         // Vérifier que c'est une image
         $validMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
         if (!in_array($file->getMimeType(), $validMimes)) {
             $this->addFlash('error', 'Seules les images (JPG, PNG, GIF, WebP) sont acceptées.');
             return $this->redirectToRoute('app_profile');

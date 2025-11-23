@@ -5,9 +5,13 @@ namespace App\Entity;
 use App\Repository\HikeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
+#[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: HikeRepository::class)]
 class Hike
 {
@@ -59,6 +63,18 @@ class Hike
 
     #[ORM\Column(length: 255)]
     private ?string $duration = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $gpxFilename = null;
+
+    #[Vich\UploadableField(mapping: 'hike_gpx', fileNameProperty: 'gpxFilename')]
+    private ?File $gpxFile = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $gpxTrack = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
@@ -236,6 +252,53 @@ class Hike
     {
         $this->creator = $creator;
         $this->createdAt = new \DateTimeImmutable();
+        return $this;
+    }
+
+    public function setGpxFile(?File $gpxFile = null): void
+    {
+        $this->gpxFile = $gpxFile;
+
+        if ($gpxFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getGpxFile(): ?File
+    {
+        return $this->gpxFile;
+    }
+
+    public function getGpxFilename(): ?string
+    {
+        return $this->gpxFilename;
+    }
+
+    public function setGpxFilename(?string $gpxFilename): self
+    {
+        $this->gpxFilename = $gpxFilename;
+        return $this;
+    }
+
+    public function getGpxTrack(): ?array
+    {
+        return $this->gpxTrack;
+    }
+
+    public function setGpxTrack(?array $gpxTrack): self
+    {
+        $this->gpxTrack = $gpxTrack;
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 }

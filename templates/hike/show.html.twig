@@ -2,6 +2,13 @@
 
 {% block title %}{{ hike.title }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {% if hike.gpxTrack %}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    {% endif %}
+{% endblock %}
+
 {% block body %}
     <div class="min-h-screen bg-gray-50">
         {{ include('_nav.html.twig') }}
@@ -114,6 +121,25 @@
                         </div>
                     </div>
 
+                    {% if hike.gpxTrack %}
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl font-semibold text-gray-900">Carte de l'itinéraire</h2>
+                                {% if hike.gpxFilename %}
+                                    <a href="{{ asset('uploads/gpx/' ~ hike.gpxFilename) }}" download class="inline-flex items-center text-sm font-semibold text-green-600 hover:text-green-700">
+                                        Télécharger le GPX
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div
+                                id="hike-map"
+                                class="w-full h-96 rounded-xl border border-gray-200"
+                                data-track="{{ hike.gpxTrack|json_encode|e('html_attr') }}">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3">Trace affichée à partir du fichier GPX fourni.</p>
+                        </div>
+                    {% endif %}
+
                     {# Sessions #}
                     <div class="bg-white rounded-lg shadow-sm p-6">
                         <div class="flex items-center justify-between mb-4">
@@ -222,4 +248,47 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if hike.gpxTrack %}
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const container = document.getElementById('hike-map');
+                if (!container || !container.dataset.track) {
+                    return;
+                }
+
+                let track = [];
+                try {
+                    track = JSON.parse(container.dataset.track) || [];
+                } catch (error) {
+                    console.error('Erreur lors de la lecture de la trace GPX', error);
+                }
+
+                if (!track.length) {
+                    container.innerHTML = '<p class="text-sm text-gray-500 p-4">Trace GPX indisponible.</p>';
+                    return;
+                }
+
+                const latlngs = track.map(point => [point.lat, point.lng]);
+                const map = L.map(container).setView(latlngs[0], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 18,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+
+                const route = L.polyline(latlngs, { color: '#16a34a', weight: 4, opacity: 0.9 }).addTo(map);
+                map.fitBounds(route.getBounds(), { padding: [24, 24] });
+
+                L.marker(latlngs[0], { title: 'Départ' }).addTo(map);
+                if (latlngs.length > 1) {
+                    L.marker(latlngs[latlngs.length - 1], { title: 'Arrivée' }).addTo(map);
+                }
+            });
+        </script>
+    {% endif %}
 {% endblock %}
