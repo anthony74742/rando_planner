@@ -37,6 +37,86 @@ Une application web permettant aux utilisateurs de :
 
 ---
 
+## 🚀 Installation et lancement du projet
+
+### Prérequis
+- PHP 8.2+
+- Composer
+- Docker & Docker Compose
+- Symfony CLI (optionnel mais recommandé)
+
+### Étapes d'installation
+
+1. **Cloner le projet**
+   ```bash
+   git clone <repository-url>
+   cd rando_planner
+   ```
+
+2. **Installer les dépendances**
+   ```bash
+   composer install
+   ```
+
+3. **Configurer les variables d'environnement**
+   - Copier `.env` vers `.env.local` si nécessaire
+   - Vérifier que `DATABASE_URL` pointe vers le bon port Docker
+
+4. **Lancer les conteneurs Docker**
+   ```bash
+   docker compose up -d
+   ```
+   
+   Les services suivants seront démarrés :
+   - **PostgreSQL** : Base de données (port dynamique, vérifier avec `docker ps`)
+   - **Mailpit** : Serveur mail de développement (SMTP: 1025, WebUI: http://localhost:8025)
+
+5. **Créer la base de données**
+   ```bash
+   php bin/console doctrine:schema:create
+   php bin/console doctrine:migrations:version --add --all --no-interaction
+   ```
+
+6. **Charger les fixtures (optionnel)**
+   ```bash
+   php bin/console doctrine:fixtures:load --no-interaction
+   ```
+
+7. **Lancer le serveur Symfony**
+   ```bash
+   symfony serve
+   # ou
+   php -S localhost:8000 -t public/
+   ```
+
+8. **Accéder à l'application**
+   - Application : http://localhost:8000
+   - Mailpit (emails) : http://localhost:8025
+
+### En cas de problème de connexion à la base de données
+
+Si vous rencontrez une erreur d'authentification PostgreSQL :
+
+1. Vérifier le port Docker actuel :
+   ```bash
+   docker ps
+   ```
+
+2. Mettre à jour le port dans `.env.local` :
+   ```env
+   DATABASE_URL="postgresql://antho:1A3C5E7G@127.0.0.1:<PORT_DOCKER>/rando_planner?serverVersion=16&charset=utf8"
+   ```
+
+3. Si nécessaire, recréer les conteneurs :
+   ```bash
+   docker compose down -v
+   docker compose up -d
+   ```
+
+4. Recréer le schéma de base de données (voir étape 5 ci-dessus)
+
+---
+
 ## 🗺️ Roadmap du projet
 
 ### 🧱 **Phase 1 — Base du projet**

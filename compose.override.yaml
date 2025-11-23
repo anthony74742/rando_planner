@@ -1,15 +1,18 @@
-# Fichier pour les overrides de développement local
-# Ce fichier est automatiquement chargé par Docker Compose en développement
-# Il surcharge les paramètres de compose.yaml pour le développement
-
 services:
-  php:
-    # Les volumes sont déjà définis dans compose.yaml, mais on peut les ajuster ici si nécessaire
-    # Les variables d'environnement sont déjà configurées dans compose.yaml avec des valeurs par défaut
-
-###> doctrine/doctrine-bundle ###
+  ###> doctrine/doctrine-bundle ###
   database:
-    # Exposer le port PostgreSQL pour le développement local
     ports:
-      - "5432:5432"
-###< doctrine/doctrine-bundle ###
+      - "57852:5432"
+  ###< doctrine/doctrine-bundle ###
+
+  ###> symfony/mailer ###
+  mailer:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+  ###< symfony/mailer ###
+

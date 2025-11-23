@@ -35,7 +35,6 @@ class InvitationService
 
         $this->repo->save($invitation, true);
 
-        // Génère les deux liens (acceptation et refus)
         $urlAccept = $this->urlGenerator->generate('app_invitation_accept', [
             'token' => $token,
         ], UrlGeneratorInterface::ABSOLUTE_URL);

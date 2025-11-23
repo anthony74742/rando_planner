@@ -1,101 +1,30 @@
-#syntax=docker/dockerfile:1
-
-# Versions
-FROM dunglas/frankenphp:1-php8.4 AS frankenphp_upstream
-
-# The different stages of this Dockerfile are meant to be built into separate images
-# https://docs.docker.com/develop/develop-images/multistage-build/#stop-at-a-specific-build-stage
-# https://docs.docker.com/compose/compose-file/#target
-
-
-# Base FrankenPHP image
-FROM frankenphp_upstream AS frankenphp_base
-
+# Étape 1 : Builder
+FROM composer:2 AS build
 WORKDIR /app
+COPY . .
+RUN composer install --no-dev --optimize-autoloader
 
-VOLUME /app/var/
+# Étape 2 : Runtime
+FROM php:8.2-apache
 
-# persistent / runtime deps
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	file \
-	git \
-	&& rm -rf /var/lib/apt/lists/*
+# Installe les extensions nécessaires pour Symfony
+RUN apt-get update && apt-get install -y git unzip libicu-dev libzip-dev zip \
+    && docker-php-ext-install intl pdo pdo_mysql opcache zip
 
-RUN set -eux; \
-	install-php-extensions \
-		@composer \
-		apcu \
-		intl \
-		opcache \
-		zip \
-	;
+# Active mod_rewrite pour Symfony
+RUN a2enmod rewrite
 
-# https://getcomposer.org/doc/03-cli.md#composer-allow-superuser
-ENV COMPOSER_ALLOW_SUPERUSER=1
+# Copie le code depuis le builder
+COPY --from=build /app /var/www/html
 
-# Transport to use by Mercure (default to Bolt)
-# ENV MERCURE_TRANSPORT_URL=bolt:///data/mercure.db
+# Définit le répertoire de travail
+WORKDIR /var/www/html
 
-ENV PHP_INI_SCAN_DIR=":$PHP_INI_DIR/app.conf.d"
+# Supprime les caches dev
+RUN php bin/console cache:clear --env=prod && php bin/console cache:warmup --env=prod
 
-###> recipes ###
-###< recipes ###
+# Expose le port Apache
+EXPOSE 80
 
-COPY --link frankenphp/conf.d/10-app.ini $PHP_INI_DIR/app.conf.d/
-COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
-COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
-
-ENTRYPOINT ["docker-entrypoint"]
-
-HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit 1
-CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile" ]
-
-# Dev FrankenPHP image
-FROM frankenphp_base AS frankenphp_dev
-
-ENV APP_ENV=dev
-ENV XDEBUG_MODE=off
-ENV FRANKENPHP_WORKER_CONFIG=watch
-
-RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
-
-RUN set -eux; \
-	install-php-extensions \
-		xdebug \
-	;
-
-COPY --link frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
-
-CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
-
-# Prod FrankenPHP image
-FROM frankenphp_base AS frankenphp_prod
-
-ENV APP_ENV=prod
-
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
-
-COPY --link frankenphp/conf.d/20-app.prod.ini $PHP_INI_DIR/app.conf.d/
-
-# prevent the reinstallation of vendors at every changes in the source code
-COPY --link composer.* symfony.* ./
-RUN set -eux; \
-	composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
-
-# copy sources
-COPY --link --exclude=frankenphp/ . ./
-
-RUN set -eux; \
-    mkdir -p var/cache var/log; \
-    composer dump-autoload --classmap-authoritative --no-dev; \
-    \
-    # Generate a temporary .env file so dump-env can run
-    echo "APP_ENV=prod" > .env && \
-    echo "APP_SECRET=${APP_SECRET}" >> .env && \
-    echo "DATABASE_URL=${DATABASE_URL}" >> .env && \
-    echo "DEFAULT_URI=${DEFAULT_URI}" >> .env; \
-    \
-    composer dump-env prod; \
-    composer run-script --no-dev post-install-cmd; \
-    chmod +x bin/console; sync;
+# Commande de démarrage
+CMD ["apache2-foreground"]
